@@ -1,6 +1,8 @@
 	<div id="recordatorios" style="margin-bottom:20px;"></div>
 	<div id="reservasFuturas" style="margin-bottom:20px;"></div>
 	<div id="historialReservas" style="margin-bottom:20px;"></div>
+	<button id="btnInformeOcupadas" style="background:#27ae60; color:#fff; padding:10px 20px; border:none; border-radius:4px; margin-bottom:20px; cursor:pointer;">Informe de Habitaciones Ocupadas</button>
+	<div id="informeOcupadas" style="margin-bottom:20px;"></div>
 				<h2>Reservar Habitación</h2>
 				<form id="formReserva">
 				<button type="button" id="cancelarReservaBtn" style="background:#e67e22; color:#fff; margin-top:10px;">Cancelar Reserva Seleccionada</button>
@@ -172,16 +174,40 @@ document.addEventListener('DOMContentLoaded', function() {
 					} else {
 						estado = 'Disponible';
 					}
-					// Tabla principal
-					const tr = document.createElement('tr');
-					tr.innerHTML = `
-						<td>${h.numero}</td>
-						<td class="${estado === 'Disponible' ? 'disponible' : (estado === 'Ocupada' ? 'ocupada' : 'reservada')}" style="${estado==='Reservada'?'color:#e67e22;font-weight:bold;':''}">${estado}${(reservaHoy&&!h.ocupacion)?' <span style=\"color:#e67e22\">¡Check-in hoy!</span>':''}</td>
-						<td>${h.ocupacion ? h.ocupacion.huesped : (reservaHoy ? reservaHoy.huesped : '')}</td>
-						<td>${h.ocupacion ? h.ocupacion.fechaIngreso : (reservaHoy ? reservaHoy.fechaIngreso : '')}</td>
-						<td>${h.ocupacion ? h.ocupacion.fechaSalida : (reservaHoy ? reservaHoy.fechaSalida : '')}</td>
-					`;
-					tabla.appendChild(tr);
+					// Tabla principal: mostrar todas las reservas futuras si no está ocupada
+					if (h.ocupacion) {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td>${h.numero}</td>
+							<td class="ocupada">Ocupada</td>
+							<td>${h.ocupacion.huesped}</td>
+							<td>${h.ocupacion.fechaIngreso}</td>
+							<td>${h.ocupacion.fechaSalida}</td>
+						`;
+						tabla.appendChild(tr);
+					} else if (futuras.length > 0) {
+						futuras.forEach((r, idx) => {
+							const tr = document.createElement('tr');
+							tr.innerHTML = `
+								<td>${h.numero}</td>
+								<td class="reservada" style="color:#e67e22;font-weight:bold;">Reservada${(r.fechaIngreso===hoy)?' <span style=\"color:#e67e22\">¡Check-in hoy!</span>':''}</td>
+								<td>${r.huesped}</td>
+								<td>${r.fechaIngreso}</td>
+								<td>${r.fechaSalida}</td>
+							`;
+							tabla.appendChild(tr);
+						});
+					} else {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td>${h.numero}</td>
+							<td class="disponible">Disponible</td>
+							<td></td>
+							<td></td>
+							<td></td>
+						`;
+						tabla.appendChild(tr);
+					}
 					// Selects
 					if (!h.ocupacion && (!reservaHoy || reservaHoy.fechaIngreso <= hoy)) {
 						const opt = document.createElement('option');
@@ -205,6 +231,18 @@ document.addEventListener('DOMContentLoaded', function() {
 					// Historial de reservas pasadas
 					pasadas.forEach(r => historial.push(`Habitación ${h.numero} - ${r.huesped} (${r.fechaIngreso} a ${r.fechaSalida})`));
 				});
+		// Informe de habitaciones ocupadas
+		document.getElementById('btnInformeOcupadas').onclick = function() {
+			let habitaciones = getHabitaciones();
+			let ocupadas = habitaciones.filter(h => h.ocupacion);
+			let html = '';
+			if (ocupadas.length === 0) {
+				html = '<b>No hay habitaciones ocupadas actualmente.</b>';
+			} else {
+				html = '<b>Habitaciones ocupadas:</b><ul>' + ocupadas.map(h => `<li>Habitación ${h.numero} - ${h.ocupacion.huesped} (${h.ocupacion.fechaIngreso} a ${h.ocupacion.fechaSalida})</li>`).join('') + '</ul>';
+			}
+			document.getElementById('informeOcupadas').innerHTML = html;
+		};
 				// Mostrar recordatorios
 				const recDiv = document.getElementById('recordatorios');
 				if (recordatorios.length > 0) {
