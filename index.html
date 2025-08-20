@@ -1,25 +1,4 @@
-	<div id="recordatorios" style="margin-bottom:20px;"></div>
-	<div id="reservasFuturas" style="margin-bottom:20px;"></div>
-	<div id="historialReservas" style="margin-bottom:20px;"></div>
-	<button id="btnInformeOcupadas" style="background:#27ae60; color:#fff; padding:10px 20px; border:none; border-radius:4px; margin-bottom:20px; cursor:pointer;">Informe de Habitaciones Ocupadas</button>
-	<div id="informeOcupadas" style="margin-bottom:20px;"></div>
-				<h2>Reservar Habitación</h2>
-				<form id="formReserva">
-				<button type="button" id="cancelarReservaBtn" style="background:#e67e22; color:#fff; margin-top:10px;">Cancelar Reserva Seleccionada</button>
-					<label>Habitación
-						<select id="habitacionReserva"></select>
-					</label>
-					<label>Nombre del Huésped
-						<input type="text" id="nombreReserva" required>
-					</label>
-					<label>Fecha de Ingreso
-						<input type="date" id="fechaReservaIngreso" required>
-					</label>
-					<label>Fecha de Salida
-						<input type="date" id="fechaReservaSalida" required>
-					</label>
-					<button type="submit">Reservar</button>
-				</form>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -45,6 +24,16 @@
 </head>
 <body>
 	<div class="container">
+		<div class="flex">
+			<div class="form-section">
+				<!-- ...existing code... -->
+			</div>
+			<div class="list-section">
+				<button id="btnInformeOcupadas" style="background:#27ae60; color:#fff; padding:10px 20px; border:none; border-radius:4px; margin-bottom:20px; cursor:pointer;">Informe diario de habitaciones ocupadas</button>
+				<div id="informeOcupadas" style="margin-bottom:20px;"></div>
+				<!-- ...existing code... -->
+			</div>
+		</div>
 		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
 			<h1 style="margin: 0;">Sistema de Recepción de Hotel</h1>
 			<button id="borrarTodo" style="background:#e74c3c; color:#fff; padding:10px 20px; border:none; border-radius:4px; cursor:pointer;">Borrar Todo</button>
@@ -52,14 +41,7 @@
 
 		<div class="flex">
 			<div class="form-section">
-				<h2>Registrar Habitación</h2>
-				<form id="formHabitacion">
-					<label>Número de Habitación
-						<input type="text" id="numeroHabitacion" required>
-					</label>
-					   <!-- Campo tipo eliminado -->
-					<button type="submit">Agregar Habitación</button>
-				</form>
+
 
 				<h2>Check-in</h2>
 
@@ -92,11 +74,13 @@
 				<table>
 					<thead>
 						<tr>
-							   <th>Número</th>
-							   <th>Estado</th>
+							<th>Número</th>
+							<th>Estado</th>
 							<th>Huésped</th>
 							<th>Ingreso</th>
 							<th>Salida</th>
+							<th>¿Ingresó?</th>
+							<th>¿Pagó?</th>
 						</tr>
 					</thead>
 					<tbody id="tablaHabitaciones"></tbody>
@@ -129,53 +113,26 @@ document.addEventListener('DOMContentLoaded', function() {
 		function render() {
 			let habitaciones = getHabitaciones();
 			// Si no hay habitaciones, crear 41 por defecto
-			if (habitaciones.length === 0) {
+			if (habitaciones.length !== 41) {
 				habitaciones = Array.from({length: 41}, (_, i) => ({
 					numero: (i+1).toString(),
 					estado: 'Disponible',
-					reservas: [], // lista de reservas futuras y actuales
-					ocupacion: null // {huesped, fechaIngreso, fechaSalida} si está ocupada
+					reservas: [],
+					ocupacion: null
 				}));
 				setHabitaciones(habitaciones);
 			}
 				const tabla = document.getElementById('tablaHabitaciones');
 				const selectCheckin = document.getElementById('habitacionCheckin');
 				const selectCheckout = document.getElementById('habitacionCheckout');
-				const selectReserva = document.getElementById('habitacionReserva');
 				tabla.innerHTML = '';
 				selectCheckin.innerHTML = '';
 				selectCheckout.innerHTML = '';
-				selectReserva.innerHTML = '';
 				const hoy = new Date().toISOString().slice(0,10);
-				let recordatorios = [];
-				let reservasFuturas = [];
-				let historial = [];
 				habitaciones.forEach(h => {
-					// Buscar reservas activas, futuras y pasadas
-					let reservaHoy = null;
-					let futuras = [];
-					let pasadas = [];
-					if (h.reservas && h.reservas.length > 0) {
-						h.reservas.forEach(r => {
-							if (r.fechaIngreso === hoy) reservaHoy = r;
-							else if (r.fechaIngreso > hoy) futuras.push(r);
-							else if (r.fechaSalida < hoy) pasadas.push(r);
-						});
-					}
-					// Estado visual
-					let estado = h.estado;
 					if (h.ocupacion) {
-						estado = 'Ocupada';
-					} else if (reservaHoy) {
-						estado = 'Reservada';
-						recordatorios.push(`Habitación ${h.numero} - Check-in hoy para ${reservaHoy.huesped}`);
-					} else if (futuras.length > 0) {
-						estado = 'Reservada';
-					} else {
-						estado = 'Disponible';
-					}
-					// Tabla principal: mostrar todas las reservas futuras si no está ocupada
-					if (h.ocupacion) {
+						const ingreso = h.ocupacion.ingreso ? '✔️' : '❌';
+						const pago = h.ocupacion.pago ? '✔️' : '❌';
 						const tr = document.createElement('tr');
 						tr.innerHTML = `
 							<td>${h.numero}</td>
@@ -183,20 +140,10 @@ document.addEventListener('DOMContentLoaded', function() {
 							<td>${h.ocupacion.huesped}</td>
 							<td>${h.ocupacion.fechaIngreso}</td>
 							<td>${h.ocupacion.fechaSalida}</td>
+							<td><button data-hab="${h.numero}" class="btn-ingreso">${ingreso}</button></td>
+							<td><button data-hab="${h.numero}" class="btn-pago">${pago}</button></td>
 						`;
 						tabla.appendChild(tr);
-					} else if (futuras.length > 0) {
-						futuras.forEach((r, idx) => {
-							const tr = document.createElement('tr');
-							tr.innerHTML = `
-								<td>${h.numero}</td>
-								<td class="reservada" style="color:#e67e22;font-weight:bold;">Reservada${(r.fechaIngreso===hoy)?' <span style=\"color:#e67e22\">¡Check-in hoy!</span>':''}</td>
-								<td>${r.huesped}</td>
-								<td>${r.fechaIngreso}</td>
-								<td>${r.fechaSalida}</td>
-							`;
-							tabla.appendChild(tr);
-						});
 					} else {
 						const tr = document.createElement('tr');
 						tr.innerHTML = `
@@ -205,11 +152,13 @@ document.addEventListener('DOMContentLoaded', function() {
 							<td></td>
 							<td></td>
 							<td></td>
+							<td></td>
+							<td></td>
 						`;
 						tabla.appendChild(tr);
 					}
 					// Selects
-					if (!h.ocupacion && (!reservaHoy || reservaHoy.fechaIngreso <= hoy)) {
+					if (!h.ocupacion) {
 						const opt = document.createElement('option');
 						opt.value = h.numero;
 						opt.textContent = h.numero;
@@ -221,15 +170,32 @@ document.addEventListener('DOMContentLoaded', function() {
 						opt.textContent = h.numero;
 						selectCheckout.appendChild(opt);
 					}
-					// El selector de reservas debe mostrar siempre todas las habitaciones
-					const optReserva = document.createElement('option');
-					optReserva.value = h.numero;
-					optReserva.textContent = h.numero;
-					selectReserva.appendChild(optReserva);
-					// Reservas futuras para lista aparte
-					futuras.forEach((r, idx) => reservasFuturas.push(`Habitación ${h.numero} - ${r.huesped} (${r.fechaIngreso} a ${r.fechaSalida}) <button onclick=\"cancelarReserva('${h.numero}',${idx})\" style=\"background:#e67e22;color:#fff;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;\">Cancelar</button>`));
-					// Historial de reservas pasadas
-					pasadas.forEach(r => historial.push(`Habitación ${h.numero} - ${r.huesped} (${r.fechaIngreso} a ${r.fechaSalida})`));
+				});
+
+				// Asignar eventos a los botones de ingreso y pago después de renderizar la tabla
+				document.querySelectorAll('.btn-ingreso').forEach(btn => {
+					btn.addEventListener('click', function() {
+						const num = this.getAttribute('data-hab');
+						let habitaciones = getHabitaciones();
+						const hab = habitaciones.find(h => h.numero === num);
+						if (hab && hab.ocupacion) {
+							hab.ocupacion.ingreso = !hab.ocupacion.ingreso;
+							setHabitaciones(habitaciones);
+							render();
+						}
+					});
+				});
+				document.querySelectorAll('.btn-pago').forEach(btn => {
+					btn.addEventListener('click', function() {
+						const num = this.getAttribute('data-hab');
+						let habitaciones = getHabitaciones();
+						const hab = habitaciones.find(h => h.numero === num);
+						if (hab && hab.ocupacion) {
+							hab.ocupacion.pago = !hab.ocupacion.pago;
+							setHabitaciones(habitaciones);
+							render();
+						}
+					});
 				});
 		// Informe de habitaciones ocupadas
 		document.getElementById('btnInformeOcupadas').onclick = function() {
@@ -264,76 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
 				} else {
 					histDiv.innerHTML = '';
 				}
-		// Cancelar reserva futura
-		window.cancelarReserva = function(numero, idx) {
-			let habitaciones = getHabitaciones();
-			habitaciones = habitaciones.map(h => {
-				if (h.numero === numero) {
-					let nuevas = h.reservas.filter((_, i) => i !== idx);
-					return { ...h, reservas: nuevas };
-				}
-				return h;
-			});
-			setHabitaciones(habitaciones);
-			render();
-		}
-		// Reservar habitación (agrega a la lista de reservas de la habitación)
-		document.getElementById('formReserva').onsubmit = function(e) {
-			e.preventDefault();
-			const numero = document.getElementById('habitacionReserva').value;
-			const huesped = document.getElementById('nombreReserva').value.trim();
-			const fechaIngreso = document.getElementById('fechaReservaIngreso').value;
-			const fechaSalida = document.getElementById('fechaReservaSalida').value;
-			if (!numero || !huesped || !fechaIngreso || !fechaSalida) return;
-			if (fechaSalida < fechaIngreso) {
-				alert('La fecha de salida no puede ser antes de la fecha de ingreso.');
-				return;
-			}
-			let habitaciones = getHabitaciones();
-			habitaciones = habitaciones.map(h => {
-				if (h.numero === numero) {
-					// Validar que no se cruce con otra reserva ni con ocupación actual
-					let conflicto = false;
-					if (h.ocupacion) {
-						// Si la ocupación actual se traslapa
-						if (!(fechaSalida < h.ocupacion.fechaIngreso || fechaIngreso > h.ocupacion.fechaSalida)) {
-							conflicto = true;
-						}
-					}
-					if (!conflicto && h.reservas.some(r => !(fechaSalida < r.fechaIngreso || fechaIngreso > r.fechaSalida))) {
-						conflicto = true;
-					}
-					if (conflicto) {
-						alert('Ya existe una reserva u ocupación que se cruza con esas fechas.');
-						return h;
-					}
-					// Ordenar reservas por fechaIngreso
-					const nuevasReservas = [...h.reservas, { huesped, fechaIngreso, fechaSalida }].sort((a,b)=>a.fechaIngreso.localeCompare(b.fechaIngreso));
-					return { ...h, reservas: nuevasReservas };
-				}
-				return h;
-			});
-			setHabitaciones(habitaciones);
-			this.reset();
-			render();
-		};
+
 		}
 
-		// Agregar habitación
-		document.getElementById('formHabitacion').onsubmit = function(e) {
-			e.preventDefault();
-			const numero = document.getElementById('numeroHabitacion').value.trim();
-			if (!numero) return;
-			let habitaciones = getHabitaciones();
-			if (habitaciones.some(h => h.numero === numero)) {
-				alert('Ya existe una habitación con ese número.');
-				return;
-			}
-			habitaciones.push({ numero, estado: 'Disponible', reservas: [], ocupacion: null });
-			setHabitaciones(habitaciones);
-			this.reset();
-			render();
-		};
+
 
 		// Check-in: solo si hay reserva activa para hoy o si está libre
 		document.getElementById('formCheckin').onsubmit = function(e) {
@@ -361,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					}
 					// Si hay una reserva para este huésped y rango, la quitamos
 					let nuevaReservas = h.reservas.filter(r => (r.huesped !== huesped || r.fechaIngreso !== fechaIngreso || r.fechaSalida !== fechaSalida));
-					return { ...h, ocupacion: { huesped, fechaIngreso, fechaSalida }, reservas: nuevaReservas, estado: 'Ocupada' };
+					return { ...h, ocupacion: { huesped, fechaIngreso, fechaSalida, ingreso: false, pago: false }, reservas: nuevaReservas, estado: 'Ocupada' };
 				}
 				return h;
 			});
