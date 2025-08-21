@@ -205,7 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
 			if (ocupadas.length === 0) {
 				html = '<b>No hay habitaciones ocupadas actualmente.</b>';
 			} else {
-				html = '<b>Habitaciones ocupadas:</b><ul>' + ocupadas.map(h => `<li>Habitación ${h.numero} - ${h.ocupacion.huesped} (${h.ocupacion.fechaIngreso} a ${h.ocupacion.fechaSalida})</li>`).join('') + '</ul>';
+				   html = `<b>Habitaciones ocupadas (${ocupadas.length}):</b><ul>` +
+					   ocupadas.map((h, i) => `<li><b>#${i + 1}</b> - Habitación ${h.numero} - ${h.ocupacion.huesped} (${h.ocupacion.fechaIngreso} a ${h.ocupacion.fechaSalida})</li>`).join('') +
+					   `</ul><b>Total de habitaciones ocupadas: ${ocupadas.length}</b>`;
 			}
 			document.getElementById('informeOcupadas').innerHTML = html;
 		};
